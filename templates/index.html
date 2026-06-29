@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer & Tweeter</title>
+    <meta name="description" content="Explore, filter, and share Google BigQuery release notes instantly. Tweet updates with pre-formatted text.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background Elements for Rich Aesthetics -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-database"></i>
+                    <i class="fa-solid fa-bolt animated-bolt"></i>
+                </div>
+                <div>
+                    <h1>BigQuery Release Notes</h1>
+                    <p class="subtitle">Stay updated with the latest BigQuery improvements and changes</p>
+                </div>
+            </div>
+            
+            <div class="actions-area">
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                    <i class="fa-solid fa-arrows-rotate spinner-icon"></i>
+                    <span>Refresh Feed</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats & Controls Bar -->
+        <section class="controls-panel card-glass">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search release notes by keywords...">
+            </div>
+            
+            <div class="filter-group">
+                <label for="type-filter"><i class="fa-solid fa-filter"></i> Filter Type:</label>
+                <select id="type-filter">
+                    <option value="all">All Updates</option>
+                    <option value="Feature">Features</option>
+                    <option value="Change">Changes</option>
+                    <option value="Deprecated">Deprecated</option>
+                    <option value="Breaking Change">Breaking Changes</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="stats-counter" id="feed-stats">
+                <span class="stat-badge"><i class="fa-solid fa-calendar-days"></i> <span id="dates-count">0</span> Days</span>
+                <span class="stat-badge"><i class="fa-solid fa-list-check"></i> <span id="items-count">0</span> Updates</span>
+            </div>
+        </section>
+
+        <!-- Main Feed Area -->
+        <main class="feed-layout">
+            <!-- Loading State -->
+            <div id="loading-state" class="feed-state-view">
+                <div class="spinner-container">
+                    <div class="double-bounce1"></div>
+                    <div class="double-bounce2"></div>
+                </div>
+                <p>Fetching latest release notes from Google Cloud...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="feed-state-view hidden">
+                <div class="error-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3>Failed to Load Feed</h3>
+                <p id="error-message">An unexpected error occurred while loading release notes.</p>
+                <button id="retry-btn" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrows-rotate"></i> Try Again
+                </button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="feed-state-view hidden">
+                <div class="empty-icon">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </div>
+                <h3>No Release Notes Found</h3>
+                <p>Try adjusting your search query or filters.</p>
+            </div>
+
+            <!-- Feed Content -->
+            <div id="feed-content" class="feed-list hidden">
+                <!-- Dynamic cards will be rendered here -->
+            </div>
+        </main>
+
+        <!-- Floating Multi-Tweet Bar -->
+        <div id="tweet-action-bar" class="tweet-bar-glass hidden">
+            <div class="tweet-bar-content">
+                <div class="tweet-bar-info">
+                    <span class="selected-count-badge" id="selected-count">0</span>
+                    <span>update(s) selected for tweeting</span>
+                </div>
+                <div class="tweet-bar-actions">
+                    <button id="clear-selection-btn" class="btn btn-text">
+                        Clear Selection
+                    </button>
+                    <button id="tweet-selected-btn" class="btn btn-twitter">
+                        <i class="fa-brands fa-x-twitter"></i> Tweet Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tweet Preview Modal -->
+    <div id="tweet-modal" class="modal-overlay hidden">
+        <div class="modal-content card-glass">
+            <div class="modal-header">
+                <h2><i class="fa-brands fa-x-twitter"></i> Customize Tweet</h2>
+                <button class="close-modal-btn" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">Review or edit the generated text before posting to X (Twitter):</p>
+                <div class="tweet-textarea-wrapper">
+                    <textarea id="tweet-textarea" rows="5" maxlength="280"></textarea>
+                    <div class="char-counter"><span id="char-count">0</span> / 280</div>
+                </div>
+                <div class="tweet-preview-card">
+                    <div class="preview-title" id="preview-title"></div>
+                    <div class="preview-meta" id="preview-meta"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-tweet-btn" class="btn btn-secondary">Cancel</button>
+                <button id="publish-tweet-btn" class="btn btn-twitter">
+                    <i class="fa-brands fa-x-twitter"></i> Post to X
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript code -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
